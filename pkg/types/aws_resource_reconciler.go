@@ -40,5 +40,5 @@ type AWSResourceReconciler interface {
 	BindControllerManager(ctrlrt.Manager) error
 	// SecretValueFromReference fetches the value of a Secret given a
 	// SecretReference
-	SecretValueFromReference(*corev1.SecretReference) (string, error)
+	SecretValueFromReference(string, *corev1.SecretKeySelector) (string, error)
 }

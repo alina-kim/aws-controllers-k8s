@@ -1,0 +1,6 @@
+resources:
+  DBInstance:
+    secrets: ["MasterUserPassword"]
+    ignore_output_fields: ["PendingModifiedValues"]
+  DBCluster:
+    secrets: ["MasterUserPassword"]

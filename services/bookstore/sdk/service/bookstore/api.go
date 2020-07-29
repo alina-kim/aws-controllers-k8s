@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	k8s "k8s.io/api/core/v1"
+	// v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -24,6 +26,9 @@ type BookData struct {
 
 	// Author is a required field
 	Author *string `locationName:"author" min:"1" type:"string" required:"true"`
+
+	// Password is a required field
+	Password *k8s.Secret `locationName:"password" type:"object" required:"true"`
 }
 
 // String returns the string representation
@@ -57,6 +62,9 @@ type BookRef struct {
 
 	// Author is a required field
 	Author *string `locationName:"author" min:"1" type:"string" required:"true"`
+
+	// Password is a required field
+	Password *k8s.Secret `locationName:"password" type:"object" required:"true"`
 
 	// CreateTime is a required field
 	CreateTime *time.Time `locationName:"createTime" type:"timestamp" required:"true"`
@@ -93,6 +101,12 @@ func (s *BookRef) SetTitle(v string) *BookRef {
 // SetAuthor sets the Author field's value.
 func (s *BookRef) SetAuthor(v string) *BookRef {
 	s.Author = &v
+	return s
+}
+
+// SetPassword sets the Password field's value.
+func (s *BookRef) SetPassword(v k8s.Secret) *BookRef {
+	s.Password = &v
 	return s
 }
 
@@ -161,6 +175,9 @@ type CreateBookInput struct {
 	// Author is a required field
 	Author *string `locationName:"author" min:"1" type:"string" required:"true"`
 
+	// Password is a required field
+	Password *k8s.Secret `locationName:"password" type:"object" required:"true"`
+
 	Tags []*TagRef `locationName:"tags" type:"list"`
 }
 
@@ -188,6 +205,9 @@ func (s *CreateBookInput) Validate() error {
 	}
 	if s.Author != nil && len(*s.Author) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Author", 1))
+	}
+	if s.Password == nil {
+		invalidParams.Add(request.NewErrParamRequired("Password"))
 	}
 	if s.Tags != nil {
 		for i, v := range s.Tags {
@@ -223,6 +243,18 @@ func (s *CreateBookInput) SetAuthor(v string) *CreateBookInput {
 	s.Author = &v
 	return s
 }
+
+// SetPassword sets the Password field's value
+func (s *CreateBookInput) SetPassword(v k8s.Secret) *CreateBookInput {
+	s.Password = &v
+	return s
+}
+
+// func GetSecret(c *v1.CoreV1Client, namespace string) *k8s.Secret {
+// 	secretInterface := v1.CoreV1Interface.Secrets(c, namespace)
+// 	sec = secretInterface.Get(ctx, )
+// 	return nil
+// }
 
 // SetTags sets the Tags field's value.
 func (s *CreateBookInput) SetTags(v []*TagRef) *CreateBookInput {

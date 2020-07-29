@@ -52,6 +52,14 @@ type ResourceGeneratorConfig struct {
 	// Found and other common error types for primary resources, and thus we
 	// need these instructions.
 	Exceptions *ExceptionsConfig `json:"exceptions,omitempty"`
+	// IgnoreOutputFields contains instructions for code generator to ignore
+	// specified output fields
+	IgnoreOutputFields []string `json:"ignore_output_fields"`
+	// SecretFieldsConfig informs the code generator that the API has sensitive fields that should be replaced with Secret object references.
+	// AWS Relational Database Service (RDS) is one example of an API that has methods requiring sensitive information.
+	// For instance, the RDS CreateDBInstance API accepts a parameter called "MasterUserPassword" in plain text.
+	// This structure instructs the code generator about the fields that must be replaced for customer privacy.
+    SecretFields []string `json:"secrets"`
 }
 
 // UnpackAttributesMapConfig informs the code generator that the API follows a

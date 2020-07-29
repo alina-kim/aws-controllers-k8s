@@ -160,7 +160,10 @@ func (h *Helper) GetTypeDefs() ([]*TypeDef, map[string]string, error) {
 				// time.Time needs to be converted to apimachinery/metav1.Time
 				// otherwise there is no DeepCopy support
 				gt = "*metav1.Time"
-			}
+			} 
+			// else if r.ReplaceSecretField(memberName) {
+				// gt = "*SecretReference"
+			// }
 			attrs[memberName] = NewAttr(memberNames, gt, memberShape)
 		}
 		if len(attrs) == 0 {

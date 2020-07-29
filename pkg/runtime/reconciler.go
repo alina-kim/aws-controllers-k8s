@@ -15,6 +15,8 @@ package runtime
 
 import (
 	"context"
+	b64 "encoding/base64"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -71,10 +73,29 @@ func (r *reconciler) BindControllerManager(mgr ctrlrt.Manager) error {
 // SecretValueFromReference fetches the value of a Secret given a
 // SecretReference
 func (r *reconciler) SecretValueFromReference(
-	ref *corev1.SecretReference,
+	ns string,
+	ref *corev1.SecretKeySelector,
 ) (string, error) {
-	// TODO(alina-kim): Implement this method :)
-	return "", ackerr.NotImplemented
+	ctx := context.Background()
+	obj := &corev1.Secret{}
+	err := r.kc.Get(ctx, client.ObjectKey{
+		Namespace: ns,
+		Name: ref.Name,
+	}, obj)
+	if err != nil {
+		return "", fmt.Errorf("Cannot find Secret")
+	}
+	m := obj.Data
+	uEnc, ok := m["password"]
+	if !ok {
+		return "", fmt.Errorf("Cannot find password key on Secret data")
+	}
+	uDec := []byte{}
+	_, err = b64.URLEncoding.Decode(uDec, uEnc)
+	if err != nil {
+		return "", fmt.Errorf("Cannot decode Secret data")
+	}
+	return string(uDec), err
 }
 
 // Reconcile implements `controller-runtime.Reconciler` and handles reconciling

@@ -65,6 +65,11 @@ func newCRDField(
 		gt = "*string"
 		gtwp = "*string"
 	}
+
+	if (crd.ReplaceSecretField(fieldNames.Original)) {
+		gt = "*corev1.SecretReference" 
+	}
+
 	return &CRDField{
 		CRD:                  crd,
 		Names:                fieldNames,
@@ -105,6 +110,7 @@ func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 	gt := shape.GoType()
 	gte := shape.GoTypeElem()
 	gtwp := shape.GoTypeWithPkgName()
+
 	// Normalize the type names for structs and list elements
 	if shape.Type == "structure" {
 		cleanNames := names.New(gte)
@@ -130,7 +136,7 @@ func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 		gtwp = "*metav1.Time"
 		gte = "metav1.Time"
 		gt = "*metav1.Time"
-	}
+	} 
 
 	// Replace the type part of the full type-with-package-name with the
 	// cleaned up type name
@@ -275,6 +281,21 @@ func (r *CRD) ExceptionCode(httpStatusCode int) string {
 		}
 	}
 	return "UNKNOWN"
+}
+
+// ReplaceSecretField returns true if the supplied field name should be replaced with
+// Secret reference.
+func (r *CRD) ReplaceSecretField(fieldName string) bool {
+	if !r.helper.HasSecretFields(r.Names.Original) {
+		return false
+	}
+	secretFields := r.helper.generatorConfig.Resources[r.Names.Original].SecretFields
+	for _, field := range secretFields {
+		if field == fieldName {
+			return true
+		}
+	}
+	return false
 }
 
 // GoCodeSetInput returns the Go code that sets an input shape's member fields
@@ -490,48 +511,62 @@ func (r *CRD) GoCodeSetInput(
 		//     }
 		//     res.VpnMemberships = f0
 		// }
-		out += fmt.Sprintf(
-			"%sif %s != nil {\n", indent, sourceAdaptedVarName,
-		)
 
-		switch memberShape.Type {
-		case "list", "structure", "map":
-			{
-				memberVarName := fmt.Sprintf("f%d", memberIndex)
-				out += r.goCodeVarEmptyConstructorSDKType(
-					memberVarName,
-					memberShape,
-					indentLevel+1,
-				)
-				out += r.goCodeSetInputForContainer(
-					memberName,
-					memberVarName,
-					sourceAdaptedVarName,
-					memberShapeRef,
-					indentLevel+1,
-				)
+		if r.ReplaceSecretField(memberName) {
+			memberVarName := fmt.Sprintf("f%d", memberIndex)
+			out += fmt.Sprintf(
+				"%s%s := %s\n",
+				indent,
+				memberVarName + ", err",
+				"rm.rr.SecretValueFromReference("+sourceAdaptedVarName+")",
+			)
+			out += fmt.Sprintf("%s%s != %s\n ", indent, "if err", "nil {",)
+			out += fmt.Sprintf(indent + "\treturn res, err\n")
+			out += fmt.Sprintf(indent + "}\n",)
+			out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, targetVarName, crdField.Names.Camel, memberVarName)	
+		} else {
+			out += fmt.Sprintf(
+				"%sif %s != nil {\n", indent, sourceAdaptedVarName,
+			)
+			switch memberShape.Type {
+			case "list", "structure", "map":
+				{
+					memberVarName := fmt.Sprintf("f%d", memberIndex)
+					out += r.goCodeVarEmptyConstructorSDKType(
+						memberVarName,
+						memberShape,
+						indentLevel+1,
+					)
+					out += r.goCodeSetInputForContainer(
+						memberName,
+						memberVarName,
+						sourceAdaptedVarName,
+						memberShapeRef,
+						indentLevel+1,
+					)
+					out += r.goCodeSetInputForScalar(
+						memberName,
+						targetVarName,
+						inputShape.Type,
+						memberVarName,
+						memberShapeRef,
+						indentLevel+1,
+					)
+				}
+			default:
 				out += r.goCodeSetInputForScalar(
 					memberName,
 					targetVarName,
 					inputShape.Type,
-					memberVarName,
+					sourceAdaptedVarName,
 					memberShapeRef,
 					indentLevel+1,
 				)
 			}
-		default:
-			out += r.goCodeSetInputForScalar(
-				memberName,
-				targetVarName,
-				inputShape.Type,
-				sourceAdaptedVarName,
-				memberShapeRef,
-				indentLevel+1,
+			out += fmt.Sprintf(
+				"%s}\n", indent,
 			)
 		}
-		out += fmt.Sprintf(
-			"%s}\n", indent,
-		)
 	}
 	return out
 }
@@ -963,7 +998,8 @@ func (r *CRD) GoCodeSetOutput(
 	case OpTypeGet:
 		op = r.Ops.ReadOne
 	case OpTypeList:
-		return r.goCodeSetOutputReadMany(
+		op = r.Ops.ReadMany
+		return r.GoCodeSetReadManyOutput (
 			r.Ops.ReadMany, sourceVarName, targetVarName, indentLevel,
 		)
 	case OpTypeUpdate:
@@ -1097,7 +1133,7 @@ func (r *CRD) GoCodeSetOutput(
 	return out
 }
 
-// goCodeSetOutputReadMany sets the supplied target variable from the results
+// GoCodeSetReadManyOutput sets the supplied target variable from the results
 // of a List operation. This is a special-case handling of those APIs where
 // there is no ReadOne operation and instead the only way to grab information
 // for a single object is to call the ReadMany/List operation with one of more
@@ -1129,7 +1165,7 @@ func (r *CRD) GoCodeSetOutput(
 //  } else {
 //      return nil, ackerr.NotFound
 //  }
-func (r *CRD) goCodeSetOutputReadMany(
+func (r *CRD) GoCodeSetReadManyOutput (
 	// The ReadMany operation descriptor
 	op *awssdkmodel.Operation,
 	// String representing the name of the variable that we will grab the
@@ -1793,6 +1829,18 @@ func (h *Helper) UnpacksAttributesMap(resourceName string) bool {
 		resGenConfig, found := h.generatorConfig.Resources[resourceName]
 		if found {
 			return resGenConfig.UnpackAttributesMapConfig != nil
+		}
+	}
+	return false
+}
+
+// HasSecretFields returns true if the underlying API has fields that
+// must be replaced with Secret references (see RDS API)
+func (h *Helper) HasSecretFields(resourceName string) bool {
+	if h.generatorConfig != nil {
+		resGenConfig, found := h.generatorConfig.Resources[resourceName]
+		if found {
+			return len(resGenConfig.SecretFields) != 0
 		}
 	}
 	return false

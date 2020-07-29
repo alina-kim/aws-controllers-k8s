@@ -12,6 +12,12 @@ import (
 {{- end }}
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
+)
+
+// Throwaway variable to avoid unused import error
+var (
+	_ = &corev1.SecretReference{}
 )
 
 // {{ .CRD.Kind }}Spec defines the desired state of {{ .CRD.Kind }}

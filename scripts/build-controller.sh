@@ -15,7 +15,7 @@ source "$SCRIPTS_DIR/lib/k8s.sh"
 : "${ACK_GENERATE_CACHE_DIR:=~/.cache/aws-controllers-k8s}"
 : "${ACK_GENERATE_BIN_PATH:=$BIN_DIR/ack-generate}"
 : "${ACK_GENERATE_API_VERSION:="v1alpha1"}"
-: "${ACK_GENERATE_CONFIG_PATH:=""}"
+: "${ACK_GENERATE_CONFIG_PATH:=$ROOT_DIR/pkg/model/testdata/models/apis/rds/0000-00-00/generator.yaml}"
 : "${K8S_RBAC_ROLE_NAME:="ack-controller-role"}"
 
 USAGE="

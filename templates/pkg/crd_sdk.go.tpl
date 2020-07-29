@@ -90,7 +90,6 @@ func (rm *resourceManager) sdkFind(
 	// Merge in the information we read from the API call above to the copy of
 	// the original Kubernetes object we passed to the function
 	ko := r.ko.DeepCopy()
-{{ $setCode }}
 	return &resource{ko}, nil
 {{- else }}
     // Believe it or not, there are API resources that can be created but there
