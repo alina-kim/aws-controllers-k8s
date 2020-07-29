@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"log"
 
 	"github.com/spf13/cobra"
 	k8sversion "k8s.io/apimachinery/pkg/version"
@@ -82,6 +83,7 @@ func generateController(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	log.Print(optGeneratorConfigPath)
 	sh, err := model.NewHelper(sdkAPI, optGeneratorConfigPath)
 	if err != nil {
 		return err

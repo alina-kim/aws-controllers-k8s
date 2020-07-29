@@ -1,0 +1,220 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: books.bookstore.services.k8s.aws
+spec:
+  group: bookstore.services.k8s.aws
+  names:
+    kind: Book
+    listKind: BookList
+    plural: books
+    singular: book
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      description: Book implements sigs.k8s.io/apimachinery/pkg/runtime.Object
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: BookSpec defines the desired state of Book
+          properties:
+            author:
+              description: Title is the Bookstore API Book's author.
+              type: string
+            name:
+              description: Name is the Bookstore API Book object's name. If unspecified or empty, it defaults to be "${name}" of k8s Book
+              type: string
+            object:
+              description: Password is the Bookstore API Book's password.
+              properties:
+                apiVersion:
+                  description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                  type: string
+                data:
+                  additionalProperties:
+                    format: byte
+                    type: string
+                  description: Data contains the secret data. Each key must consist of alphanumeric characters, '-', '_' or '.'. The serialized form of the secret data is a base64 encoded string, representing the arbitrary (possibly non-string) data value here. Described in https://tools.ietf.org/html/rfc4648#section-4
+                  type: object
+                immutable:
+                  description: Immutable, if set to true, ensures that data stored in the Secret cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil. This is an alpha field enabled by ImmutableEphemeralVolumes feature gate.
+                  type: boolean
+                kind:
+                  description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                  type: string
+                metadata:
+                  description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
+                  type: object
+                stringData:
+                  additionalProperties:
+                    type: string
+                  description: stringData allows specifying non-binary secret data in string form. It is provided as a write-only convenience method. All keys and values are merged into the data field on write, overwriting any existing values. It is never output when reading from the API.
+                  type: object
+                type:
+                  description: Used to facilitate programmatic handling of secret data.
+                  type: string
+              type: object
+            title:
+              description: Title is the Bookstore API Book's title.
+              type: string
+          required:
+          - author
+          - object
+          - title
+          type: object
+        status:
+          description: BookStatus defines the observed state of Book
+          properties:
+            ackResourceMetadata:
+              description: All CRs managed by ACK will have a common `Status.ACKResourceMetadata` member that is used to contain resource sync state, account ownership, constructed ARN for the resource
+              properties:
+                arn:
+                  description: ARN is the Amazon Resource Name for the resource. This is a globally-unique identifier and is set only by the ACK service controller once the controller has orchestrated the creation of the resource OR when it has verified that an "adopted" resource (a resource where the ARN annotation was set by the Kubernetes user on the CR) exists and matches the supplied CR's Spec field values.
+                  type: string
+                ownerAccountID:
+                  description: OwnerAccountID is the AWS Account ID of the account that owns the backend AWS service API resource.
+                  type: string
+              required:
+              - arn
+              - ownerAccountID
+              type: object
+            conditions:
+              description: All CRS managed by ACK have a common `Status.Conditions` member that contains a collection of `ackv1alpha1.Condition` objects that describe the various terminal states of the CR and its backend AWS service API resource
+              items:
+                description: Condition is the common struct used by all CRDs managed by ACK service controllers to indicate terminal states  of the CR and its backend AWS service API resource
+                properties:
+                  lastTransitionTime:
+                    description: Last time the condition transitioned from one status to another.
+                    format: date-time
+                    type: string
+                  message:
+                    description: A human readable message indicating details about the transition.
+                    type: string
+                  reason:
+                    description: The reason for the condition's last transition.
+                    type: string
+                  status:
+                    description: Status of the condition, one of True, False, Unknown.
+                    type: string
+                  type:
+                    description: Type is the type of the Condition
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              type: array
+            createTime:
+              description: CreateTime is the datetime the book was created
+              properties:
+                ext:
+                  format: int64
+                  type: int64
+                loc:
+                  description: loc specifies the Location that should be used to determine the minute, hour, month, day, and year that correspond to this Time. The nil location means UTC. All UTC times are represented with loc==nil, never loc==&utcLoc.
+                  properties:
+                    cacheEnd:
+                      format: int64
+                      type: int64
+                    cacheStart:
+                      description: Most lookups will be for the current time. To avoid the binary search through tx, keep a static one-element cache that gives the correct zone for the time when the Location was created. if cacheStart <= t < cacheEnd, lookup can return cacheZone. The units for cacheStart and cacheEnd are seconds since January 1, 1970 UTC, to match the argument to lookup.
+                      format: int64
+                      type: int64
+                    cacheZone:
+                      description: A zone represents a single time zone such as CET.
+                      properties:
+                        isDST:
+                          type: bool
+                        name:
+                          type: string
+                        offset:
+                          type: int
+                      required:
+                      - isDST
+                      - name
+                      - offset
+                      type: object
+                    name:
+                      type: string
+                    tx:
+                      items:
+                        description: A zoneTrans represents a single time zone transition.
+                        properties:
+                          index:
+                            type: uint8
+                          isstd:
+                            type: bool
+                          isutc:
+                            type: bool
+                          when:
+                            format: int64
+                            type: int64
+                        required:
+                        - index
+                        - isstd
+                        - isutc
+                        - when
+                        type: object
+                      type: object
+                    zone:
+                      items:
+                        description: A zone represents a single time zone such as CET.
+                        properties:
+                          isDST:
+                            type: bool
+                          name:
+                            type: string
+                          offset:
+                            type: int
+                        required:
+                        - isDST
+                        - name
+                        - offset
+                        type: object
+                      type: object
+                  required:
+                  - cacheEnd
+                  - cacheStart
+                  - cacheZone
+                  - name
+                  - tx
+                  - zone
+                  type: object
+                wall:
+                  description: "wall and ext encode the wall time seconds, wall time nanoseconds, and optional monotonic clock reading in nanoseconds. \n From high to low bit position, wall encodes a 1-bit flag (hasMonotonic), a 33-bit seconds field, and a 30-bit wall time nanoseconds field. The nanoseconds field is in the range [0, 999999999]. If the hasMonotonic bit is 0, then the 33-bit field must be zero and the full signed 64-bit wall seconds since Jan 1 year 1 is stored in ext. If the hasMonotonic bit is 1, then the 33-bit field holds a 33-bit unsigned wall seconds since Jan 1 year 1885, and ext holds a signed 64-bit monotonic clock reading, nanoseconds since process start."
+                  format: int64
+                  type: uint64
+              required:
+              - ext
+              - loc
+              - wall
+              type: object
+          required:
+          - ackResourceMetadata
+          - conditions
+          - createTime
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

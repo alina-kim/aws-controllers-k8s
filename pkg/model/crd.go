@@ -18,11 +18,14 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"log"
 
 	awssdkmodel "github.com/aws/aws-sdk-go/private/model/api"
 	"github.com/gertd/go-pluralize"
 
 	"github.com/aws/aws-controllers-k8s/pkg/names"
+
+	// k8s "k8s.io/api/core/v1"
 )
 
 type CRDOps struct {
@@ -65,6 +68,12 @@ func newCRDField(
 		gt = "*string"
 		gtwp = "*string"
 	}
+
+	if (crd.ReplaceSecretField(fieldNames.Original)) {
+		log.Print(fieldNames.Original)
+		gt = "*SecretReference" 
+	}
+
 	return &CRDField{
 		CRD:                  crd,
 		Names:                fieldNames,
@@ -105,6 +114,7 @@ func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 	gt := shape.GoType()
 	gte := shape.GoTypeElem()
 	gtwp := shape.GoTypeWithPkgName()
+
 	// Normalize the type names for structs and list elements
 	if shape.Type == "structure" {
 		cleanNames := names.New(gte)
@@ -130,7 +140,7 @@ func (r *CRD) cleanGoType(shape *awssdkmodel.Shape) (string, string, string) {
 		gtwp = "*metav1.Time"
 		gte = "metav1.Time"
 		gt = "*metav1.Time"
-	}
+	} 
 
 	// Replace the type part of the full type-with-package-name with the
 	// cleaned up type name
@@ -214,12 +224,40 @@ func (r *CRD) UnpackAttributes() {
 	}
 }
 
+
+// // ReplaceSecret grabs instructions about fields that are represented in the
+// // AWS API as `*string` but are fields that should be of type *SecretReference
+// // and adds CRDField definitions for those fields.
+// func (r *CRD) ReplaceSecret() {
+// 	if !r.helper.HasSecretFields(r.Names.Original) {
+// 		return
+// 	}
+// 	secretConfig := r.helper.generatorConfig.Resources[r.Names.Original].SecretFieldsConfig
+// 	for fieldName := range secretConfig.Fields {
+// 		fieldNames := names.New(fieldName)
+// 		crdField := newCRDField(r, fieldNames, nil, nil)
+// 		r.SpecFields[fieldName] = crdField
+// 	}
+// }
+
 // IsPrimaryARNField returns true if the supplied field name is likely the resource's
 // ARN identifier field.
 func (r *CRD) IsPrimaryARNField(fieldName string) bool {
 	lowerName := strings.ToLower(fieldName)
 	lowerResName := strings.ToLower(r.Names.Original)
 	return lowerName == "arn" || lowerName == lowerResName+"arn"
+}
+
+// ReplaceSecretField returns true if the supplied field name should be replaced with
+// Secret reference.
+func (r *CRD) ReplaceSecretField(fieldName string) bool {
+	if !r.helper.HasSecretFields(r.Names.Original) {
+		// log.Print(r.Names.Original)
+		return false
+	}
+	secretFieldsConfig := r.helper.generatorConfig.Resources[r.Names.Original].SecretFieldsConfig.Fields
+	_, found := secretFieldsConfig[fieldName]
+	return found
 }
 
 // GoCodeSetInput returns the Go code that sets an input shape's member fields
@@ -416,6 +454,25 @@ func (r *CRD) GoCodeSetInput(
 		// }
 		// res.VpnMemberships = f0
 
+		if r.ReplaceSecretField(memberName) {
+			memberVarName := fmt.Sprintf("f%d", memberIndex)
+			out += fmt.Sprintf("%s%s := %s\n", indent, memberVarName, "*SecretReference")
+				out += r.goCodeSetInputForContainer(
+					memberName,
+					memberVarName,
+					sourceAdaptedVarName+"."+crdField.Names.Camel,
+					memberShapeRef,
+					indentLevel,
+				)
+				out += r.goCodeSetInputForScalar(
+					memberName,
+					targetVarName,
+					"*SecretReference",
+					memberVarName,
+					memberShapeRef,
+					indentLevel,
+				)
+		} else {
 		switch memberShape.Type {
 		case "list", "structure", "map":
 			{
@@ -451,6 +508,7 @@ func (r *CRD) GoCodeSetInput(
 				indentLevel,
 			)
 		}
+	}
 	}
 	return out
 }
@@ -1352,6 +1410,9 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 			return nil, ErrNilShapePointer
 		}
 		for memberName, memberShapeRef := range inputShape.MemberRefs {
+			// if (crd.ReplaceSecretField(memberName)) {
+
+			// } else {
 			memberNames := names.New(memberName)
 			if memberShapeRef.Shape == nil {
 				return nil, ErrNilShapePointer
@@ -1361,6 +1422,7 @@ func (h *Helper) GetCRDs() ([]*CRD, error) {
 				continue
 			}
 			crd.AddSpecField(memberNames, memberShapeRef)
+		// }
 		}
 
 		// Now process the fields that will go into the Status struct. We want
@@ -1477,6 +1539,19 @@ func (h *Helper) UnpacksAttributesMap(resourceName string) bool {
 		resGenConfig, found := h.generatorConfig.Resources[resourceName]
 		if found {
 			return resGenConfig.UnpackAttributesMapConfig != nil
+		}
+	}
+	return false
+}
+
+// HasSecretFields returns true if the underlying API has fields that
+// must be replaced with Secret references (see RDS API)
+func (h *Helper) HasSecretFields(resourceName string) bool {
+	if h.generatorConfig != nil {
+		// log.Print(resourceName)
+		resGenConfig, found := h.generatorConfig.Resources[resourceName]
+		if found {
+			return resGenConfig.SecretFieldsConfig != nil
 		}
 	}
 	return false

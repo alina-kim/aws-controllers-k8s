@@ -15,6 +15,7 @@ package model
 
 import (
 	"io/ioutil"
+	"log"
 
 	"github.com/ghodss/yaml"
 )
@@ -46,6 +47,25 @@ type ResourceGeneratorConfig struct {
 	// UnpackAttributeMapConfig contains instructions for converting a raw
 	// `map[string]*string` into real fields on a CRD's Spec or Status object
 	UnpackAttributesMapConfig *UnpackAttributesMapConfig `json:"unpack_attributes_map,omitempty"`
+
+    // SecretFieldsConfig contains instructions for converting specific fields into Secret objects on a CRD's Spec object
+    SecretFieldsConfig *SecretFieldsConfig `json:"secrets,omitempty"`
+}
+
+// SecretFieldsConfig informs the code generator that the API has sensitive fields that should be replaced with Secret object references.
+// AWS Relational Database Service (RDS) is one example of an API that has methods requiring sensitive information. 
+// For instance, the RDS CreateDBInstance API accepts a parameter called "MasterUserPassword" in plain text.
+// This structure instructs the code generator about the fields that must be replaced for customer privacy.
+type SecretFieldsConfig struct {
+	// Fields map[string]SecretFieldGeneratorConfig `json:"fields"`
+	Fields map[string]struct{} `json:"fields"`
+}
+
+// SecretFieldGeneratorConfig contains instructions to the code generator about how
+// to interpret the Secret reference given and how to map it to a CRD's Spec or
+// Status field
+type SecretFieldGeneratorConfig struct {
+    // Blank for now! Unsure if additional info is needed
 }
 
 // UnpackAttributesMapConfig informs the code generator that the API follows a
@@ -121,6 +141,7 @@ type FieldGeneratorConfig struct {
 func NewGeneratorConfig(
 	configPath string,
 ) (*GeneratorConfig, error) {
+	log.Print("i am created")
 	gc := GeneratorConfig{}
 	contents, err := ioutil.ReadFile(configPath)
 	if err != nil {

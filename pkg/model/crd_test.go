@@ -42,6 +42,24 @@ func getCRDByName(name string, crds []*model.CRD) *model.CRD {
 	return nil
 }
 
+func TestSecretCreation(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	sh := testutil.NewSchemaHelperForService(t, "rds")
+
+	crds, err := rds.GetCRDs()
+	require.Nil(err)
+
+	crd := getCRDByName("DBInstance")
+	specFields := crd.SpecFields
+
+	// expSpecFieldCamel := []string{
+
+	// }
+	// assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
+}
+
 func TestSNSTopic(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)

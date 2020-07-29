@@ -15,7 +15,7 @@ package v1alpha1
 
 import (
 	"time"
-
+	k8s "k8s.io/api/core/v1"
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -30,6 +30,13 @@ type BookSpec struct {
 	Title *string `json:"title"`
 	// Title is the Bookstore API Book's author.
 	Author *string `json:"author"`
+	// Password is the Bookstore API Book's password.
+	Password *k8s.Secret `json:"object"`
+
+	// // SecretName is the Bookstore API Book's password.
+	// SecretName *string `json:"password.name"`
+	// // SecretKey is the Bookstore API Book's password.
+	// SecretKey *string `json:"password.key"`
 }
 
 // BookStatus defines the observed state of Book

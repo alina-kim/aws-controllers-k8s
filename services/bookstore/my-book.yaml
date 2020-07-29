@@ -1,0 +1,19 @@
+apiVersion: bookstore.services.k8s.aws/v1alpha1
+kind: Book
+metadata:
+  name: mybook
+spec:
+  title: mytitle
+  author: myauthor
+  password:
+    name: test-secret
+    key: password
+  # containers:
+  # - name: my-container
+  #   image: redis
+  #   env:
+  #     name: PASSWORD
+  #     valueFrom:
+  #       secretKeyRef:
+  #         name: test-secret
+  #         key: password

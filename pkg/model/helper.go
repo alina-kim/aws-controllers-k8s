@@ -16,6 +16,7 @@ package model
 import (
 	"fmt"
 	"strings"
+	"log"
 
 	"github.com/aws/aws-controllers-k8s/pkg/names"
 
@@ -90,6 +91,7 @@ func NewHelper(
 	var gc *GeneratorConfig
 	var err error
 	if configPath != "" {
+		log.Print("i am creating")
 		gc, err = NewGeneratorConfig(configPath)
 		if err != nil {
 			return nil, err

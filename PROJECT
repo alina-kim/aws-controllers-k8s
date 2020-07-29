@@ -1,0 +1,3 @@
+domain: my.domain
+repo: github.com/aws/aws-controllers-k8s
+version: "2"

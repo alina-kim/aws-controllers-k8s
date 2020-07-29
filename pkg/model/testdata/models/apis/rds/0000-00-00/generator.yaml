@@ -1,0 +1,9 @@
+resources:
+  DBInstance:
+    secrets:
+      fields:
+        MasterUserPassword: 
+  DBCluster:
+    secrets:
+      fields:
+        MasterUserPassword: 
