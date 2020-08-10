@@ -15,7 +15,6 @@ package model
 
 import (
 	"io/ioutil"
-	"log"
 
 	"github.com/ghodss/yaml"
 )
@@ -141,7 +140,6 @@ type FieldGeneratorConfig struct {
 func NewGeneratorConfig(
 	configPath string,
 ) (*GeneratorConfig, error) {
-	log.Print("i am created")
 	gc := GeneratorConfig{}
 	contents, err := ioutil.ReadFile(configPath)
 	if err != nil {

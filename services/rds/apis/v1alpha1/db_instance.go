@@ -18,6 +18,12 @@ package v1alpha1
 import (
 	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
+)
+
+// Throwaway variable to avoid unused import error
+var (
+	_ = &corev1.SecretReference{}
 )
 
 // DBInstanceSpec defines the desired state of DBInstance
@@ -46,7 +52,7 @@ type DBInstanceSpec struct {
 	IOPS *int64 `json:"iops,omitempty"`
 	KMSKeyID *string `json:"kmsKeyID,omitempty"`
 	LicenseModel *string `json:"licenseModel,omitempty"`
-	MasterUserPassword *SecretReference `json:"masterUserPassword,omitempty"`
+	MasterUserPassword *corev1.SecretReference `json:"masterUserPassword,omitempty"`
 	MasterUsername *string `json:"masterUsername,omitempty"`
 	MaxAllocatedStorage *int64 `json:"maxAllocatedStorage,omitempty"`
 	MonitoringInterval *int64 `json:"monitoringInterval,omitempty"`

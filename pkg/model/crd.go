@@ -70,8 +70,8 @@ func newCRDField(
 	}
 
 	if (crd.ReplaceSecretField(fieldNames.Original)) {
-		log.Print(fieldNames.Original)
-		gt = "*SecretReference" 
+		// log.Print(fieldNames.Original)
+		gt = "*corev1.SecretReference" 
 	}
 
 	return &CRDField{
@@ -456,22 +456,41 @@ func (r *CRD) GoCodeSetInput(
 
 		if r.ReplaceSecretField(memberName) {
 			memberVarName := fmt.Sprintf("f%d", memberIndex)
-			out += fmt.Sprintf("%s%s := %s\n", indent, memberVarName, "*SecretReference")
-				out += r.goCodeSetInputForContainer(
-					memberName,
-					memberVarName,
-					sourceAdaptedVarName+"."+crdField.Names.Camel,
-					memberShapeRef,
-					indentLevel,
-				)
-				out += r.goCodeSetInputForScalar(
-					memberName,
-					targetVarName,
-					"*SecretReference",
-					memberVarName,
-					memberShapeRef,
-					indentLevel,
-				)
+			// out += fmt.Sprintf("%s%s := %s\n", indent, memberVarName, "*SecretReference")
+			out += fmt.Sprintf("%s%s := %s\n", indent, memberVarName, "string")
+			elemVarName := fmt.Sprintf("%selem", memberVarName)
+			// op := r.Ops.GetAttriutes
+			// out += fmt.Sprintf("%s%s := %s\n", indent, memberVarName, "")
+			out += r.goCodeSetInputForContainer(
+				"",
+				elemVarName,
+				sourceAdaptedVarName+"."+crdField.Names.Camel,
+				memberShapeRef,
+				indentLevel,
+			)
+			out += fmt.Sprintf(indent+"log.Print("+elemVarName+".Name)\n",)
+			out += fmt.Sprintf(
+				"%s%s := %s\n",
+				indent,
+				"secretName", 
+				elemVarName+".Name",
+			)
+			out += fmt.Sprintf(
+				"%s%s := %s\n",
+				indent,
+				"secret, err",
+				"rm.client.secrets.Get(secretName)",
+				// "rm.rr.GetSecretValue("+sourceAdaptedVarName+"."+crdField.Names.Camel+")",
+			)
+			out += fmt.Sprintf("%s%s != %s\n ", indent, "if err", "nil {",)
+			out += fmt.Sprintf(indent + "\treturn err\n")
+			out += fmt.Sprintf(indent + "}\n",)
+			out += fmt.Sprintf("%s%s = %s\n ", indent, memberVarName + ", err", "b64.StdEncoding.DecodeString(secret)",)
+			out += fmt.Sprintf("%s%s != %s\n ", indent, "if err", "nil {",)
+			out += fmt.Sprintf(indent + "\treturn err\n")
+			out += fmt.Sprintf(indent + "}\n",)
+			log.Print("")
+			out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, targetVarName, crdField.Names.Camel, memberVarName)	
 		} else {
 		switch memberShape.Type {
 		case "list", "structure", "map":

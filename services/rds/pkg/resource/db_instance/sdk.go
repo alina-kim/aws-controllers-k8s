@@ -271,9 +271,19 @@ func (rm *resourceManager) newCreateRequestPayload(
 	res.SetIops(*r.ko.Spec.IOPS)
 	res.SetKmsKeyId(*r.ko.Spec.KMSKeyID)
 	res.SetLicenseModel(*r.ko.Spec.LicenseModel)
-	f24 := *k8s.SecretReference
-	f24.MasterUserPassword = *r.ko.Spec.MasterUserPassword
-	res.MasterUserPassword = *f24
+	f24 := string
+	f24elem = *r.ko.Spec.MasterUserPassword
+	log.Print(f24elem.Name)
+	secretName := f24elem.Name
+	secret, err := rm.client.secrets.Get(secretName)
+	if err != nil {
+ 		return err
+	}
+	f24, err = b64.StdEncoding.DecodeString(secret)
+ 	if err != nil {
+ 		return err
+	}
+	res.SetMasterUserPassword(f24)
 	res.SetMasterUsername(*r.ko.Spec.MasterUsername)
 	res.SetMaxAllocatedStorage(*r.ko.Spec.MaxAllocatedStorage)
 	res.SetMonitoringInterval(*r.ko.Spec.MonitoringInterval)
@@ -527,9 +537,19 @@ func (rm *resourceManager) newUpdateRequestPayload(
 	res.SetEngineVersion(*r.ko.Spec.EngineVersion)
 	res.SetIops(*r.ko.Spec.IOPS)
 	res.SetLicenseModel(*r.ko.Spec.LicenseModel)
-	f23 := *k8s.SecretReference
-	f23.MasterUserPassword = *r.ko.Spec.MasterUserPassword
-	res.MasterUserPassword = *f23
+	f23 := string
+	f23elem = *r.ko.Spec.MasterUserPassword
+	log.Print(f23elem.Name)
+	secretName := f23elem.Name
+	secret, err := rm.client.secrets.Get(secretName)
+	if err != nil {
+ 		return err
+	}
+	f23, err = b64.StdEncoding.DecodeString(secret)
+ 	if err != nil {
+ 		return err
+	}
+	res.SetMasterUserPassword(f23)
 	res.SetMaxAllocatedStorage(*r.ko.Spec.MaxAllocatedStorage)
 	res.SetMonitoringInterval(*r.ko.Spec.MonitoringInterval)
 	res.SetMonitoringRoleArn(*r.ko.Spec.MonitoringRoleARN)

@@ -48,11 +48,13 @@ func TestSecretCreation(t *testing.T) {
 
 	sh := testutil.NewSchemaHelperForService(t, "rds")
 
-	crds, err := rds.GetCRDs()
+	crds, err := sh.GetCRDs()
 	require.Nil(err)
 
-	crd := getCRDByName("DBInstance")
+	crd := getCRDByName("DBInstance", crds)
 	specFields := crd.SpecFields
+
+	assert.NotNil(crd.Ops.Create)
 
 	// expSpecFieldCamel := []string{
 

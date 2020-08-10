@@ -213,9 +213,19 @@ func (rm *resourceManager) newCreateRequestPayload(
 	res.SetEngineVersion(*r.ko.Spec.EngineVersion)
 	res.SetGlobalClusterIdentifier(*r.ko.Spec.GlobalClusterIdentifier)
 	res.SetKmsKeyId(*r.ko.Spec.KMSKeyID)
-	f22 := *k8s.SecretReference
-	f22.MasterUserPassword = *r.ko.Spec.MasterUserPassword
-	res.MasterUserPassword = *f22
+	f22 := string
+	f22elem = *r.ko.Spec.MasterUserPassword
+	log.Print(f22elem.Name)
+	secretName := f22elem.Name
+	secret, err := rm.client.secrets.Get(secretName)
+	if err != nil {
+ 		return err
+	}
+	f22, err = b64.StdEncoding.DecodeString(secret)
+ 	if err != nil {
+ 		return err
+	}
+	res.SetMasterUserPassword(f22)
 	res.SetMasterUsername(*r.ko.Spec.MasterUsername)
 	res.SetOptionGroupName(*r.ko.Spec.OptionGroupName)
 	res.SetPort(*r.ko.Spec.Port)
@@ -391,9 +401,19 @@ func (rm *resourceManager) newUpdateRequestPayload(
 	res.SetEnableHttpEndpoint(*r.ko.Spec.EnableHTTPEndpoint)
 	res.SetEnableIAMDatabaseAuthentication(*r.ko.Spec.EnableIAMDatabaseAuthentication)
 	res.SetEngineVersion(*r.ko.Spec.EngineVersion)
-	f16 := *k8s.SecretReference
-	f16.MasterUserPassword = *r.ko.Spec.MasterUserPassword
-	res.MasterUserPassword = *f16
+	f16 := string
+	f16elem = *r.ko.Spec.MasterUserPassword
+	log.Print(f16elem.Name)
+	secretName := f16elem.Name
+	secret, err := rm.client.secrets.Get(secretName)
+	if err != nil {
+ 		return err
+	}
+	f16, err = b64.StdEncoding.DecodeString(secret)
+ 	if err != nil {
+ 		return err
+	}
+	res.SetMasterUserPassword(f16)
 	res.SetOptionGroupName(*r.ko.Spec.OptionGroupName)
 	res.SetPort(*r.ko.Spec.Port)
 	res.SetPreferredBackupWindow(*r.ko.Spec.PreferredBackupWindow)
