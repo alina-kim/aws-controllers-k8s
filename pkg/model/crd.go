@@ -67,7 +67,7 @@ func newCRDField(
 	}
 
 	if (crd.ReplaceSecretField(fieldNames.Original)) {
-		gt = "*corev1.SecretReference" 
+		gt = "*corev1.SecretKeySelector" 
 	}
 
 	return &CRDField{
@@ -284,7 +284,7 @@ func (r *CRD) ExceptionCode(httpStatusCode int) string {
 }
 
 // ReplaceSecretField returns true if the supplied field name should be replaced with
-// Secret reference.
+// a SecretKeySelector object.
 func (r *CRD) ReplaceSecretField(fieldName string) bool {
 	if !r.helper.HasSecretFields(r.Names.Original) {
 		return false
@@ -514,13 +514,17 @@ func (r *CRD) GoCodeSetInput(
 
 		if r.ReplaceSecretField(memberName) {
 			memberVarName := fmt.Sprintf("f%d", memberIndex)
+			ns := "\"\""
 			out += fmt.Sprintf(
 				"%s%s := %s\n",
 				indent,
 				memberVarName + ", err",
-				"rm.rr.SecretValueFromReference("+sourceAdaptedVarName+")",
+				"rm.rr.SecretValueFromReference("+ns+", "+sourceAdaptedVarName+")",
 			)
 			out += fmt.Sprintf("%s%s != %s\n ", indent, "if err", "nil {",)
+			out += fmt.Sprintf(indent + "\tvar s corev1.ConditionStatus = corev1.ConditionTrue\n")
+			out += fmt.Sprintf(indent + "\tvar d ackv1alpha1.ConditionType = ackv1alpha1.MissingDependency\n")
+			out += fmt.Sprintf(indent + "\tr.ko.Status.Conditions = append(r.ko.Status.Conditions, &ackv1alpha1.Condition{Type: d, Status: s})\n")
 			out += fmt.Sprintf(indent + "\treturn res, err\n")
 			out += fmt.Sprintf(indent + "}\n",)
 			out += fmt.Sprintf("%s%s.Set%s(%s)\n", indent, targetVarName, crdField.Names.Camel, memberVarName)	

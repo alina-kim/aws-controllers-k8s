@@ -42,26 +42,6 @@ func getCRDByName(name string, crds []*model.CRD) *model.CRD {
 	return nil
 }
 
-// func TestSecretCreation(t *testing.T) {
-// 	assert := assert.New(t)
-// 	require := require.New(t)
-
-// 	sh := testutil.NewSchemaHelperForService(t, "rds")
-
-// 	crds, err := sh.GetCRDs()
-// 	require.Nil(err)
-
-// 	crd := getCRDByName("DBInstance", crds)
-// 	specFields := crd.SpecFields
-
-// 	assert.NotNil(crd.Ops.Create)
-
-// 	// expSpecFieldCamel := []string{
-
-// 	// }
-// 	// assert.Equal(expSpecFieldCamel, attrCamelNames(specFields))
-// }
-
 func TestSNSTopic(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
@@ -2615,9 +2595,14 @@ func TestRDS_DBInstance(t *testing.T) {
 	if r.ko.Spec.LicenseModel != nil {
 		res.SetLicenseModel(*r.ko.Spec.LicenseModel)
 	}
-	if r.ko.Spec.MasterUserPassword != nil {
-		res.SetMasterUserPassword(*r.ko.Spec.MasterUserPassword)
+	f24, err := rm.rr.SecretValueFromReference("", r.ko.Spec.MasterUserPassword)
+	if err != nil {
+ 		var s corev1.ConditionStatus = corev1.ConditionTrue
+		var d ackv1alpha1.ConditionType = ackv1alpha1.MissingDependency
+		r.ko.Status.Conditions = append(r.ko.Status.Conditions, &ackv1alpha1.Condition{Type: d, Status: s})
+		return res, err
 	}
+	res.SetMasterUserPassword(f24)
 	if r.ko.Spec.MasterUsername != nil {
 		res.SetMasterUsername(*r.ko.Spec.MasterUsername)
 	}

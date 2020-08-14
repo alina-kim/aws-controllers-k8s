@@ -16,7 +16,6 @@ package runtime
 import (
 	"context"
 	b64 "encoding/base64"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -83,17 +82,17 @@ func (r *reconciler) SecretValueFromReference(
 		Name: ref.Name,
 	}, obj)
 	if err != nil {
-		return "", fmt.Errorf("Cannot find Secret")
+		return "", ackerr.NotFound
 	}
 	m := obj.Data
-	uEnc, ok := m["password"]
+	uEnc, ok := m[ref.Key]
 	if !ok {
-		return "", fmt.Errorf("Cannot find password key on Secret data")
+		return "", ackerr.SecretKeyNotFound
 	}
 	uDec := []byte{}
 	_, err = b64.URLEncoding.Decode(uDec, uEnc)
 	if err != nil {
-		return "", fmt.Errorf("Cannot decode Secret data")
+		return "", ackerr.DecodeError
 	}
 	return string(uDec), err
 }

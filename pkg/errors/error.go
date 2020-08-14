@@ -34,6 +34,11 @@ var (
 	// information that the resource being checked for existence was
 	// previously-created out of band from ACK
 	AdoptedResourceNotFound = fmt.Errorf("adopted resource not found")
+	// SecretKeyNotFound is returned when a Secret object cannot be found in
+	// the supplied namespace with the SecretKeySelector Key
+	SecretKeyNotFound = fmt.Errorf("secret with supplied key and namespace not found")
+	// DecodeError is returned when decoding base64 encrypted data fails
+	DecodeError = fmt.Errorf("error decoding input")
 )
 
 // AWSError returns the type conversion for the supplied error to an aws-sdk-go

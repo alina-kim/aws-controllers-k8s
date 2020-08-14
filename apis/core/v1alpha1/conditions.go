@@ -26,6 +26,10 @@ const (
 	// ConditionTypeResourceSynced indicates the state of the resource in the
 	// backend service is in sync with the ACK service controller
 	ConditionTypeResourceSynced ConditionType = "ACK.ResourceSynced"
+
+	// MissingDependency indicates that a K8s resource is missing a dependent
+	// resource
+	MissingDependency ConditionType = "ACK.MissingDependency"
 )
 
 // Condition is the common struct used by all CRDs managed by ACK service

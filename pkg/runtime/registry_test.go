@@ -51,3 +51,31 @@ func TestRegistry(t *testing.T) {
 	rmf.AssertCalled(t, "ResourceDescriptor")
 	rd.AssertCalled(t, "GroupKind")
 }
+
+func TestSecretCreation(t *testing.T) {
+	require := require.New(t)
+
+	rd := &mocks.AWSResourceDescriptor{}
+	rd.On("GroupKind").Return(
+		&metav1.GroupKind{
+			Group: "rds.services.k8s.aws/v1alpha1",
+			Kind:  "DBInstance",
+		},
+	)
+
+	rmf := &mocks.AWSResourceManagerFactory{}
+	rmf.On("ResourceDescriptor").Return(rd)
+
+	reg := ackrt.NewRegistry()
+
+	rmfs := reg.GetResourceManagerFactories()
+	require.Empty(rmfs)
+
+	reg.RegisterResourceManagerFactory(rmf)
+	rmfs = reg.GetResourceManagerFactories()
+	require.NotEmpty(rmfs)
+	require.Contains(rmfs, rmf)
+
+	rmf.AssertCalled(t, "ResourceDescriptor")
+	rd.AssertCalled(t, "GroupKind")
+}
